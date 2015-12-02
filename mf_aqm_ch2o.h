@@ -33,7 +33,8 @@ class mf_aqm_ch2o
 	public :
 		mf_aqm_ch2o( void );	
 		void loop( void );
-        float read( void );
+        float read_current( void );
+		float read_average( void );
 };
 
 

@@ -23,14 +23,17 @@ Serial uart();
 #endif
 
 
-typedef struct
+typedef struct
+
 {
     byte rx_buffer[20];     //接收数据缓存
 	u8   rx_posi;        //当前接收数据字节数
     float concentration;    //气体浓度
+	float concentration_sum;
+	u16   sum_count;
 }param_t;
 
-static param_t param = {{0}, 0, 0.0};
+static param_t param = {{0}, 0, 0.0, 0.0, 0};
 
 
 mf_aqm_ch2o::mf_aqm_ch2o( void )
@@ -69,6 +72,8 @@ void mf_aqm_ch2o::loop( void )
             {
                 param.concentration = 
                     (param.rx_buffer[4]*256+param.rx_buffer[5])*0.001;
+				param.concentration_sum += param.concentration;
+				param.sum_count++;
             }
             param.rx_posi = 0;
             for (i = 0; i < sizeof(param.rx_buffer); i++)
@@ -79,8 +84,21 @@ void mf_aqm_ch2o::loop( void )
     }
 }
 
-//read CH2O gas concentration
-float mf_aqm_ch2o::read( void )
+//读甲醛气体当前浓度值
+float mf_aqm_ch2o::read_current( void )
 {
     return 	param.concentration;
+}
+
+//读甲醛气体上一次读取与本次读取之间的平均值
+float mf_aqm_ch2o::read_average( void )
+{
+	float ret = 0.0;
+	if ((param.concentration_sum != 0) && (param.sum_count != 0))
+	{
+		ret = param.concentration_sum/param.sum_count;
+	}
+	param.concentration_sum = 0.0;
+	param.sum_count = 0;
+    return 	ret;
 }
